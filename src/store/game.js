@@ -1,28 +1,29 @@
 import { createReducer, createAction } from 'redux-starter-kit'
 
-export const startGame = createAction('START_GAME')
-export const failGame = createAction('FAIL_GAME')
-export const winGame = createAction('WIN_GAME')
+export const start = createAction('START_GAME')
+export const fail = createAction('FAIL_GAME')
+export const win = createAction('WIN_GAME')
 
+// List of available words
 const words = ['3dhubs', 'marvin', 'print', 'filament', 'order', 'layer']
 
-const stopGame = (gameState) => (state) => {
+const stopGame = (reason) => (state) => {
   return {
     ...state,
-    state: gameState
+    status: reason
   }
 }
 
-export const game = createReducer({ word: '', state: null }, {
-  [startGame.type]: () => {
+export const game = createReducer({ word: '', status: null }, {
+  [start.type]: () => {
     const index = Math.floor(Math.random() * 5) + 1
     return {
       word: words[index],
-      state: 'started'
+      status: 'started'
     }
   },
-  [failGame.type]: stopGame('fail'),
-  [winGame.type]: stopGame('fail')
+  [fail.type]: stopGame('fail'),
+  [win.type]: stopGame('win')
 })
 
 export default game

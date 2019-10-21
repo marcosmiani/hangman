@@ -1,10 +1,8 @@
 import React from 'react'
 import logo from './logo.svg'
-import get from 'lodash/get'
 import { connect } from 'react-redux'
-import { startGame } from './store/game'
-import { attemptLetter } from './store/attempts'
 import styled, { createGlobalStyle } from 'styled-components'
+import { startGame, attemptLetter } from './store/api'
 import Keyboard from 'react-simple-keyboard'
 import 'react-simple-keyboard/build/css/index.css'
 
@@ -57,7 +55,7 @@ const Body = styled.div`
 
   .hg-theme-default {
     color: black;
-    margin-top: 30px;
+    margin: 30px 0;
 
     & .hg-button{
       &.hg-red {
@@ -79,61 +77,122 @@ const Button = styled.button`
   color: white;
 `
 
+/**
+ * Returns the color that matches the game status
+ * @param {props} param0
+ */
+const getStatusColor = ({ status }) => {
+  switch(status) {
+    case 'started':
+      return 'lightgreen'
+    case 'fail':
+      return 'red'
+    case 'win':
+      return 'lightgreen'
+    default:
+      return 'transparent'
+  }
+}
+
+const Status = styled.div`
+  border: 2px solid ${getStatusColor};
+  min-height: 20px;
+  border-radius: 8px;
+  margin: 26px;
+  padding: 2px;
+  text-transform: capitalize;
+  color: ${getStatusColor};
+`
+
+const Strikes = styled.div`
+  border: 2px solid red;
+  min-height: 20px;
+  border-radius: 8px;
+  color: white;
+`
+// Default keyboard layout
+const defaultLayout = [
+  "1 2 3 4 5 6 7 8 9 0",
+  "q w e r t y u i o p",
+  "a s d f g h j k l",
+  "z x c v b n m",
+]
+
+/**
+ * Returns the highlighted letters on the keyboard on theme shape ofr the keyboard
+ * @param {array} attempts
+ */
+const getKeyboardThemes = (attempts) => {
+  const [failLetters, matchedLetters] = attempts.reduce(
+    ([fails, matches], [letter, match]) => {
+      return match
+        ? [fails, matches + ' ' + letter]
+        : [fails + ' ' + letter, matches]
+    },
+    ['', '']
+  )
+
+  // Add themes on the keyboard as needed
+  const buttonTheme = []
+  if (failLetters) {
+    buttonTheme.push({
+      class: "hg-red",
+      buttons: failLetters
+    })
+  }
+  if (matchedLetters) {
+    buttonTheme.push({
+      class: "hg-highlight",
+      buttons: matchedLetters
+    })
+  }
+
+  return buttonTheme
+}
+
 const connector = connect(
   state => ({
-    word: get(state, 'game.word'),
-    status: get(state, 'game.status'),
-    attempts: new Map(get(state, 'attempts', []))
+    word: state.game.word,
+    status: state.game.status,
+    attempts: state.attempts.list,
+    strikes: state.attempts.strikes
   })
 )
 
 export const App = (props) => {
-  const { dispatch, word, attempts } = props
+  const { dispatch, word, attempts, status, strikes } = props
 
   const onKeyPress = letter => {
-    console.log("Button pressed", letter);
-    dispatch(attemptLetter({
-      letter,
-      correct: word.indexOf(letter) !== -1
-    }))
+    dispatch(attemptLetter(letter))
   }
+
+  // Map the letters to ease its use
+  const letterMap = new Map(attempts)
 
   return (
     <AppWrapper>
       <GlobalStyle />
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
+        <Status status={status}>{status}</Status>
+        <Strikes>Strikes: {strikes}</Strikes>
       </header>
       <Body>
         <p>
           {word && [...word].map((letter, index) => (
-            <Letter key={index} letter={letter} show={attempts.has(letter)} />
+            <Letter key={index} letter={letter} show={letterMap.has(letter)} />
           ))}
         </p>
-        <Button onClick={() => dispatch(startGame())} >START</Button>
         {word && <Keyboard
           theme={"hg-theme-default hg-layout-default"}
           layoutName='default'
           onKeyPress={onKeyPress}
-          layout={{
-            default: [
-              "1 2 3 4 5 6 7 8 9 0",
-              "q w e r t y u i o p",
-              "a s d f g h j k l",
-              "z x c v b n m",
-            ]
-          }}
-          buttonTheme={[
-            {
-              class: "hg-red",
-              buttons: "Q W E R T Y q w e r t y"
-            },
-            {
-              class: "hg-highlight",
-              buttons: "Q q"
-            }
-          ]}
+          layout={{ default: defaultLayout }}
+          buttonTheme={getKeyboardThemes(attempts)}
         />}
+        <Button onClick={() => dispatch(startGame())} >
+          {!status ? 'START' : 'RESTART'}
+        </Button>
       </Body>
     </AppWrapper>
   )
