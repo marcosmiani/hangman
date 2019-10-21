@@ -4,6 +4,8 @@ import { connect } from 'react-redux'
 import styled, { createGlobalStyle } from 'styled-components'
 import { startGame, attemptLetter } from './store/api'
 import Keyboard from 'react-simple-keyboard'
+import Scores from './ScoreMeter'
+import Strikes from './StrikeMeter'
 import 'react-simple-keyboard/build/css/index.css'
 
 const GlobalStyle = createGlobalStyle`
@@ -42,10 +44,10 @@ const AppWrapper = styled.div`
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
+`
 
-  .App-logo {
-    height: 40vmin;
-  }
+const AppLogo = styled.img`
+  height: 40vmin;
 `
 
 const Body = styled.div`
@@ -72,6 +74,7 @@ const Body = styled.div`
 
 const Button = styled.button`
   background-color: transparent;
+  margin: 16px;
   border: 2px solid white;
   border-radius: 2px;
   color: white;
@@ -82,7 +85,7 @@ const Button = styled.button`
  * @param {props} param0
  */
 const getStatusColor = ({ status }) => {
-  switch(status) {
+  switch (status) {
     case 'started':
       return 'lightgreen'
     case 'fail':
@@ -104,18 +107,12 @@ const Status = styled.div`
   color: ${getStatusColor};
 `
 
-const Strikes = styled.div`
-  border: 2px solid red;
-  min-height: 20px;
-  border-radius: 8px;
-  color: white;
-`
 // Default keyboard layout
 const defaultLayout = [
-  "1 2 3 4 5 6 7 8 9 0",
-  "q w e r t y u i o p",
-  "a s d f g h j k l",
-  "z x c v b n m",
+  '1 2 3 4 5 6 7 8 9 0',
+  'q w e r t y u i o p',
+  'a s d f g h j k l',
+  'z x c v b n m'
 ]
 
 /**
@@ -136,13 +133,13 @@ const getKeyboardThemes = (attempts) => {
   const buttonTheme = []
   if (failLetters) {
     buttonTheme.push({
-      class: "hg-red",
+      class: 'hg-red',
       buttons: failLetters
     })
   }
   if (matchedLetters) {
     buttonTheme.push({
-      class: "hg-highlight",
+      class: 'hg-highlight',
       buttons: matchedLetters
     })
   }
@@ -160,7 +157,7 @@ const connector = connect(
 )
 
 export const App = (props) => {
-  const { dispatch, word, attempts, status, strikes } = props
+  const { dispatch, word, attempts, status } = props
 
   const onKeyPress = letter => {
     dispatch(attemptLetter(letter))
@@ -172,10 +169,11 @@ export const App = (props) => {
   return (
     <AppWrapper>
       <GlobalStyle />
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+      <header>
+        <AppLogo src={logo} alt='logo' />
         <Status status={status}>{status}</Status>
-        <Strikes>Strikes: {strikes}</Strikes>
+        <Scores />
+        <Strikes />
       </header>
       <Body>
         <p>
@@ -183,14 +181,14 @@ export const App = (props) => {
             <Letter key={index} letter={letter} show={letterMap.has(letter)} />
           ))}
         </p>
-        {word && <Keyboard
-          theme={"hg-theme-default hg-layout-default"}
+        {word && status !== 'win' && <Keyboard
+          theme='hg-theme-default hg-layout-default'
           layoutName='default'
           onKeyPress={onKeyPress}
           layout={{ default: defaultLayout }}
           buttonTheme={getKeyboardThemes(attempts)}
         />}
-        <Button onClick={() => dispatch(startGame())} >
+        <Button onClick={() => dispatch(startGame())}>
           {!status ? 'START' : 'RESTART'}
         </Button>
       </Body>
