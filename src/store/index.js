@@ -1,11 +1,11 @@
 import { configureStore } from 'redux-starter-kit'
 import game from './game'
-import attempt from './attempt'
+import attempts from './attempts'
 
 const store = configureStore({
   reducer: {
-    games: game,
-    attempt: attempt
+    game,
+    attempts: attempts
   }
 })
 

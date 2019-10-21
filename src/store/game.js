@@ -6,23 +6,20 @@ export const winGame = createAction('WIN_GAME')
 
 const words = ['3dhubs', 'marvin', 'print', 'filament', 'order', 'layer']
 
-const stopGame = (gameState) => (state, action) => {
-  const { game = null } = action.payload
-  const previousMap = new Map(state)
-  const previousGame = previousMap.get(game)
-
-  const newMap = new Map(...state)
-  newMap.set(previousGame.id, { ...previousGame, state: gameState })
-  return [...newMap]
+const stopGame = (gameState) => (state) => {
+  return {
+    ...state,
+    state: gameState
+  }
 }
 
-export const game = createReducer([], {
-  [startGame.type]: (state) => {
-    const index = Math.floor(Math.random() * 6) + 1
-    const newMap = new Map(state)
-    const id = state.length + 1
-    newMap.set(id, { id, word: words[index], state: 'started' })
-    return [...newMap]
+export const game = createReducer({ word: '', state: null }, {
+  [startGame.type]: () => {
+    const index = Math.floor(Math.random() * 5) + 1
+    return {
+      word: words[index],
+      state: 'started'
+    }
   },
   [failGame.type]: stopGame('fail'),
   [winGame.type]: stopGame('fail')
